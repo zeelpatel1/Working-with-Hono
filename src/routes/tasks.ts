@@ -14,7 +14,7 @@ type Task= {
 
 type Tasks=Task[];
 
-const tasks:Tasks=[];
+
 
 
 tasksRouter.use("*",async(c,next)=>{
@@ -23,8 +23,9 @@ tasksRouter.use("*",async(c,next)=>{
     await next()
 })
 
-tasksRouter.get('/',(c)=>{
-    return c.json(tasks)
+tasksRouter.get('/',async(c)=>{
+    const {results}=await c.env.tasks_db.prepare("SELECT * FROM tasks").run()
+    return c.json(results)
 })
 
 tasksRouter.post('/', async (c) => {
@@ -35,27 +36,27 @@ tasksRouter.post('/', async (c) => {
     if(!validateData.success){
       return c.json({error:validateData.error.message},400)
     }
-    const newTask:Task={
-      id:tasks.length+1,
-      title
-    }
+    
+    const result=await c.env.tasks_db.prepare("INSERT INTO tasks (title) VALUES (?)").bind(title).run()
   
-    tasks.push(newTask) 
-  
-    return c.json(newTask)
+    return c.json({
+        sucess:true,
+        id:result.meta.last_row_id,
+        title
+    })
   
   })
   
-  tasksRouter.delete('/:id',(c)=>{
+  tasksRouter.delete('/:id',async(c)=>{
     const id=Number(c.req.param('id'))
   
-    const index=tasks.findIndex(task=>task.id===id)
-    if(index===-1){
-      return c.json({error:'Task not found'},404)
+    const result=await c.env.tasks_db.prepare("DELETE FROM tasks where id= ?").bind(id).run()
+
+    if(result.meta.changes===0){
+        return c.json({error:"Task not found"},404)
     }
-  
-    tasks.splice(index,1)
-    return c.json({message:'Task deleted successfully'},200)
+
+    return c.json({message:"Task deleted successfully"})
   
 })
 
