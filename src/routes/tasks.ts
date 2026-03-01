@@ -16,6 +16,13 @@ type Tasks=Task[];
 
 const tasks:Tasks=[];
 
+
+tasksRouter.use("*",async(c,next)=>{
+    const authHeader=c.req.header('Authorization')
+    if(authHeader !== "Bearer 1234"){{return c.json({error:'Unauthorized'},401)}}
+    await next()
+})
+
 tasksRouter.get('/',(c)=>{
     return c.json(tasks)
 })
