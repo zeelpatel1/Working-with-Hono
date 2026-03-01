@@ -20,4 +20,8 @@ app.onError((err,c)=>{
   return c.json({error:'Internal Server Error'},500)
 })
 
+app.get('/secret',(c)=>{
+  return c.text(c.env.MY_SECRET)
+})
+
 export default app
