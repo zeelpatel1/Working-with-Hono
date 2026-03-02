@@ -24,7 +24,18 @@ tasksRouter.use("*",async(c,next)=>{
 })
 
 tasksRouter.get('/',async(c)=>{
-    const {results}=await c.env.tasks_db.prepare("SELECT * FROM tasks").run()
+
+    const limitParam=c.req.query("limit")
+    const offsetParam=c.req.query("offset")
+
+    const limit=Number(limitParam ?? 10)
+    const offset=Number(offsetParam ?? 0)
+
+    if(isNaN(limit) || isNaN(offset)){
+        return c.json({ error: "Invalid pagination parameters" }, 400)
+    }
+
+    const {results}=await c.env.tasks_db.prepare("SELECT * FROM tasks LIMIT ? OFFSET ?").bind(limit,offset).all()
     return c.json(results)
 })
 
